@@ -83,8 +83,8 @@ def timestamp():
 
 
 def reduce_mem_usage(df):
-    """ iterate through all the columns of a dataframe and modify the data type
-        to reduce memory usage.
+    """Reduce memory of a dataframe.
+    Iterate through all the columns of a dataframe and modify the data type to reduce memory usage.
     """
     start_mem = df.memory_usage().sum() / 1024**2
     print('Memory usage of dataframe is {:.2f} MB'.format(start_mem))
@@ -92,7 +92,7 @@ def reduce_mem_usage(df):
     for col in df.columns:
         col_type = df[col].dtype
 
-        if col_type != object:
+        if col_type != 'object' and col_type != 'datetime64[ns]':
             c_min = df[col].min()
             c_max = df[col].max()
             if str(col_type)[:3] == 'int':
@@ -106,13 +106,11 @@ def reduce_mem_usage(df):
                     df[col] = df[col].astype(np.int64)
             else:
                 if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                    df[col] = df[col].astype(np.float16)
+                    df[col] = df[col].astype(np.float32)  # fix for feather
                 elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
                     df[col] = df[col].astype(np.float32)
                 else:
                     df[col] = df[col].astype(np.float64)
-        else:
-            df[col] = df[col].astype('category')
 
     end_mem = df.memory_usage().sum() / 1024**2
     print('Memory usage after optimization is: {:.2f} MB'.format(end_mem))
